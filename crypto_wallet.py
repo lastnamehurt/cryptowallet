@@ -81,31 +81,34 @@ class WalletService(object):
             "Diff": self.diff
         }
         summary_message = {
-                "attachments": [
-                    {
-                        "color": "#36a64f" if gained else '#d90f0f',
-                        "blocks": [{
-                            "type": "section",
-                            "fields": [
-                                {
-                                    "type": "mrkdwn",
-                                    "text": "*Total Invested:*\n${}".format(results["Invested"])
-                                },
-                                {
-                                    "type": "mrkdwn",
-                                    "text": "*Current Balance:*\n${}".format(results["Balance"])
-                                },
-                                {
-                                    "type": "mrkdwn",
-                                    "text": "*Total Profit*\n${}".format(results["Diff"])
-                                },
-                            ]
-                        }]
-                    }
+            "attachments": [
+                {
+                    "color": "#36a64f" if gained else '#d90f0f',
+                    "blocks": [{
+                        "type": "section",
+                        "fields": [
+                            {
+                                "type": "mrkdwn",
+                                "text": "*Total Invested:*\n${}".format(results["Invested"])
+                            },
+                            {
+                                "type": "mrkdwn",
+                                "text": "*Current Balance:*\n${}".format(results["Balance"])
+                            },
+                            {
+                                "type": "mrkdwn",
+                                "text": "*Total Profit*\n${}".format(results["Diff"])
+                            },
+                        ]
+                    }]
+                }
             ]
         }
         if notify and self.hasChanged:
-            slack.api_call("chat.postMessage", text="", attachments=summary_message['attachments'], channel='#crypt_o_wallet', username='CryptMoney')
+            slack.api_call("chat.postMessage", text="",
+                           icon_url='https://cdn.pixabay.com/photo/2013/12/08/12/12/bitcoin-225079_960_720.png',
+                           attachments=summary_message['attachments'], channel='#crypt_o_wallet', username='CryptMoney',
+                           as_user=False)
         return results
 
 
