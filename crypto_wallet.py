@@ -9,6 +9,9 @@ from slackclient import SlackClient
 client = Client(os.environ.get('COINBASE_KEY'), os.environ.get('COINBASE_SECRET'))
 slack = SlackClient(os.environ.get('POOKIE_SLACK_TOKEN', 'POOKIE2_SLACK_TOKEN'))
 log = logging.getLogger(__name__)
+CHANNEL = 'crypt_o_wallet'
+USERNAME = 'CryptMoney'
+ICON_URL = 'https://cdn.pixabay.com/photo/2013/12/08/12/12/bitcoin-225079_960_720.png'
 
 
 class WalletService(object):
@@ -26,7 +29,7 @@ class WalletService(object):
                 my_accounts.append(account)
         return my_accounts
 
-    def diff(self, last_price, new_price):
+    def difference(self, last_price, new_price):
         return last_price - new_price
 
     def gained(self, new_balance, old_balance):
@@ -70,7 +73,7 @@ class WalletService(object):
         self.hasChanged = False
         self.invested = self.get_total_invested()
         self.balance = self.get_total_wallet()
-        self.diff = self.balance - self.invested
+        self.diff = self.difference(self.balance, self.invested)
         gained = self.gained(self.balance, self.invested)
         if self.diff != self._old_diff:
             self.hasChanged = True
@@ -106,12 +109,12 @@ class WalletService(object):
         }
         if notify and self.hasChanged:
             slack.api_call("chat.postMessage", text="",
-                           icon_url='https://cdn.pixabay.com/photo/2013/12/08/12/12/bitcoin-225079_960_720.png',
-                           attachments=summary_message['attachments'], channel='#crypt_o_wallet', username='CryptMoney',
+                           icon_url=ICON_URL,
+                           attachments=summary_message['attachments'], channel=CHANNEL, username=USERNAME,
                            as_user=False)
         return results
 
 
+service = WalletService()
 if __name__ == '__main__':
-    service = WalletService()
     service.run()
