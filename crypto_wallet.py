@@ -38,6 +38,9 @@ class WalletService(object):
             return True
         return False
 
+    def percent_changed(self, original_value, new_value):
+        return (float(new_value) - float(original_value)) / float(abs(original_value)) * 100
+
     def run(self):
         log.info("Initializing WalletService")
         schedule.every(15).seconds.do(self.get_summary, notify=True)
@@ -74,6 +77,7 @@ class WalletService(object):
         self.invested = self.get_total_invested()
         self.balance = self.get_total_wallet()
         self.diff = self.difference(self.balance, self.invested)
+        self.percent = self.percent_changed(self.invested, self.balance)
         gained = self.gained(self.balance, self.invested)
         if self.diff != self._old_diff:
             self.hasChanged = True
@@ -81,7 +85,8 @@ class WalletService(object):
         results = {
             "Invested": self.invested,
             "Balance": self.balance,
-            "Diff": self.diff
+            "Diff": self.diff,
+            "byPercent": self.percent
         }
         summary_message = {
             "attachments": [
@@ -101,6 +106,10 @@ class WalletService(object):
                             {
                                 "type": "mrkdwn",
                                 "text": "*Total Profit*\n${}".format(results["Diff"])
+                            },
+                            {
+                                "type": "mrkdwn",
+                                "text": "*Percent Change*\n{}%".format(round(results["byPercent"], 2))
                             },
                         ]
                     }]
