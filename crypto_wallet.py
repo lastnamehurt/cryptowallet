@@ -6,9 +6,11 @@ import schedule
 from coinbase.wallet.client import Client
 from slackclient import SlackClient
 
+logging.basicConfig(level=logging.INFO,
+                    format='%(asctime)s | %(levelname)s | %(funcName)s |%(message)s')
+log = logging.getLogger(__name__)
 client = Client(os.environ.get('COINBASE_KEY'), os.environ.get('COINBASE_SECRET'))
 slack = SlackClient(os.environ.get('POOKIE_SLACK_TOKEN', 'POOKIE2_SLACK_TOKEN'))
-log = logging.getLogger(__name__)
 CHANNEL = 'crypt_o_wallet'
 USERNAME = 'CryptMoney'
 ICON_URL = 'https://cdn.pixabay.com/photo/2013/12/08/12/12/bitcoin-225079_960_720.png'
@@ -43,7 +45,7 @@ class WalletService(object):
 
     def run(self):
         log.info("Initializing WalletService")
-        schedule.every(10).seconds.do(self.get_summary, notify=True)
+        schedule.every(1).minutes.do(self.get_summary, notify=True)
         while True:
             schedule.run_pending()
 
@@ -60,6 +62,7 @@ class WalletService(object):
         for transaction in transactions:
             for data in transaction.data:
                 total += Decimal(data.native_amount.amount)
+        log.info("Total Investment: {}".format(total))
         return total
 
     def get_total_wallet(self):
@@ -70,9 +73,11 @@ class WalletService(object):
             message.append(str(wallet['name']) + ' ' + str(wallet['native_balance']))
             value = str(wallet['native_balance']).replace('USD', '')
             total += Decimal(value)
+        log.info("Total Balance: {}".format(total))
         return total
 
     def get_summary(self, notify=False):
+        log.info("Collecting Summary data")
         self.hasChanged = False
         self.invested = self.get_total_invested()
         self.balance = self.get_total_wallet()
@@ -80,6 +85,7 @@ class WalletService(object):
         self.percent = self.percent_changed(self.invested, self.balance)
         gained = self.gained(self.balance, self.invested)
         if self.diff != self._old_diff:
+            log.info("Found diffs between current <{}> and old <{}>".format(self.diff, self._old_diff))
             self.hasChanged = True
             self._old_diff = self.diff
         results = {
