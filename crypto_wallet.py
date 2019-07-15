@@ -81,7 +81,7 @@ class WalletService(object):
         self.percent = self.percent_changed(self.invested, self.balance)
         gained = self.gained(self.balance, self.invested)
         if self.diff == self._old_diff:
-            log.info("No Changes")
+            log.info("No Changes. Current Profit: {} | Old Profit: {}".format(self.diff, self._old_diff))
         else:
             log.info("Wallet Balance Changed\nCurrent <{}>\nPrevious <{}>".format(self.diff, self._old_diff))
             self.hasChanged = True
