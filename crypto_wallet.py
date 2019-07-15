@@ -43,7 +43,7 @@ class WalletService(object):
 
     def run(self):
         log.info("Initializing WalletService")
-        schedule.every(15).seconds.do(self.get_summary, notify=True)
+        schedule.every(10).seconds.do(self.get_summary, notify=True)
         while True:
             schedule.run_pending()
 
@@ -121,6 +121,8 @@ class WalletService(object):
                            icon_url=ICON_URL,
                            attachments=summary_message['attachments'], channel=CHANNEL, username=USERNAME,
                            as_user=False)
+            if self.percent >= 10 or self.percent <= -10:
+                pass
         return results
 
 
