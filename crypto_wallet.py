@@ -35,7 +35,7 @@ class WalletService(object):
         return last_price - new_price
 
     def gained(self, new_balance, old_balance):
-        difference = old_balance - new_balance
+        difference = self.difference(old_balance, new_balance)
         if difference < Decimal(0):
             return True
         return False
@@ -62,18 +62,14 @@ class WalletService(object):
         for transaction in transactions:
             for data in transaction.data:
                 total += Decimal(data.native_amount.amount)
-        log.info("Total Investment: {}".format(total))
         return total
 
     def get_total_wallet(self):
         total = Decimal(0)
-        message = []
         accounts = client.get_accounts()
         for wallet in accounts.data:
-            message.append(str(wallet['name']) + ' ' + str(wallet['native_balance']))
             value = str(wallet['native_balance']).replace('USD', '')
             total += Decimal(value)
-        log.info("Total Balance: {}".format(total))
         return total
 
     def get_summary(self, notify=False):
@@ -84,8 +80,10 @@ class WalletService(object):
         self.diff = self.difference(self.balance, self.invested)
         self.percent = self.percent_changed(self.invested, self.balance)
         gained = self.gained(self.balance, self.invested)
-        if self.diff != self._old_diff:
-            log.info("Found diffs between current <{}> and old <{}>".format(self.diff, self._old_diff))
+        if self.diff == self._old_diff:
+            log.info("No Changes")
+        else:
+            log.info("Wallet Balance Changed\nCurrent <{}>\nPrevious <{}>".format(self.diff, self._old_diff))
             self.hasChanged = True
             self._old_diff = self.diff
         results = {
@@ -122,6 +120,7 @@ class WalletService(object):
                 }
             ]
         }
+        log.info("Summary Result:\n{}".format(results))
         if notify and self.hasChanged:
             slack.api_call("chat.postMessage", text="",
                            icon_url=ICON_URL,
