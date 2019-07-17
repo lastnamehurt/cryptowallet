@@ -56,7 +56,7 @@ class WalletService(object):
     def run(self):
         log.info("Initializing WalletService")
         if slack.rtm_connect():
-            schedule.every().minute.at(":00").do(service.get_summary, notify=True)
+            schedule.every(5).minutes.do(service.get_summary, notify=True)
             log.info(schedule.jobs)
             while True:
                 schedule.run_pending()
