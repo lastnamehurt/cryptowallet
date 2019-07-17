@@ -1,5 +1,7 @@
 import logging
 import os
+import sys
+import traceback
 from decimal import Decimal
 
 import schedule
@@ -10,18 +12,26 @@ logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s | %(levelname)s | %(funcName)s |%(message)s')
 log = logging.getLogger(__name__)
 client = Client(os.environ.get('COINBASE_KEY'), os.environ.get('COINBASE_SECRET'))
-slack = SlackClient(os.environ.get('POOKIE_SLACK_TOKEN', 'POOKIE2_SLACK_TOKEN'))
-CHANNEL = 'crypt_o_wallet'
+slack = SlackClient(os.environ.get('POOKIE_SLACK_TOKEN'))
+CHANNEL = '#crypt_o_wallet'
+CHANNEL_ID = "CLE5A5GJC"
 USERNAME = 'CryptMoney'
 ICON_URL = 'https://cdn.pixabay.com/photo/2013/12/08/12/12/bitcoin-225079_960_720.png'
+ALIAS = 'cryptobot'
 
 
 class WalletService(object):
-    invested = 0
-    balance = 0
-    diff = 0
-    _old_diff = 0
-    hasChanged = False
+    def __init__(self):
+        self.invested = 0
+        self.balance = 0
+        self.diff = 0
+        self._old_diff = 0
+        self.hasChanged = False
+        self.REQUESTS = {
+            'get details': {
+                'action': self.send_details
+            },
+        }
 
     def my_account_data(self):
         my_accounts = []
@@ -45,9 +55,19 @@ class WalletService(object):
 
     def run(self):
         log.info("Initializing WalletService")
-        schedule.every(1).minutes.do(self.get_summary, notify=True)
-        while True:
-            schedule.run_pending()
+        if slack.rtm_connect():
+            while True:
+                all_data = slack.rtm_read()
+                for data in all_data:
+                    log.info(data)
+                    try:
+                        if (data.has_key('text')) and (ALIAS.lower() in data['text']) and (
+                                data['channel'] == CHANNEL_ID):
+                            self.listen_for_valid_request(data)
+                    except Exception as e:
+                        ("Uh ohhh. Exceptions\n{}".format(e))
+                        self.post_message("Exception: {}\n```{}```".format(e, traceback.print_exc(file=sys.stdout)),
+                                          CHANNEL)
 
     def get_all_transactions(self):
         transactions = []
@@ -130,7 +150,72 @@ class WalletService(object):
                 pass
         return results
 
+    def listen_for_valid_request(self, data):
+        for command in self.REQUESTS.keys():
+            if command in data['text']:
+                self.REQUESTS[command].get('action')()
+                return command
+
+    def send_details(self, notify=True):
+        data = self.my_account_data()
+        # message = {
+        #     "attachments": [{
+        #         "color": "",
+        #         "blocks": [{
+        #             "type": "section",
+        #             "fields": []
+        #         }]
+        #     }]
+        # }
+        for detail in data:
+            detail_message = {
+                "attachments": [
+                    {
+                        "color": "#36a64f",
+                        "blocks": [{
+                            "type": "section",
+                            "fields": [
+                                {
+                                    "type": "mrkdwn",
+                                    "text": "*Wallet:*\n{}".format(detail.currency)
+                                },
+                                {
+                                    "type": "mrkdwn",
+                                    "text": "*Balance:*\n{}".format(detail.native_balance.amount)
+                                },
+                                {
+                                    "type": "mrkdwn",
+                                    "text": "*Units:*\n{}".format(detail.balance.amount)
+                                }
+                            ]
+                        },
+                            {
+                                "type": "divider"
+                            }
+                        ]
+                    }
+                ]
+            }
+            if notify:
+                slack.api_call("chat.postMessage", text="", attachments=detail_message['attachments'],
+                               username=USERNAME,
+                               channel=CHANNEL)
+        return data
+
+    # TODO: Use this for all slack messages but with an attachments kwarg
+    def post_message(self, channel, text):
+        logging.info("Posting Message to Slack")
+        logging.info(80 * "=")
+        slack.api_call("chat.postMessage", channel=channel, text=text,
+                       username=USERNAME, unfurl_links="true")
+
 
 service = WalletService()
-if __name__ == '__main__':
-    service.run()
+
+
+class SlackService(object):
+    if __name__ == '__main__':
+        schedule.every(5).minutes.do(service.get_summary, notify=True)
+        schedule.run_pending()
+        log.info(schedule.jobs)
+        service.run()
