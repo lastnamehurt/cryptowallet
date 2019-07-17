@@ -202,7 +202,7 @@ class WalletService(object):
             if notify:
                 slack.api_call("chat.postMessage", text="", attachments=detail_message['attachments'],
                                username=USERNAME,
-                               channel=CHANNEL)
+                               channel=CHANNEL, icon_url=ICON_URL)
         return data
 
     # TODO: Use this for all slack messages but with an attachments kwarg
