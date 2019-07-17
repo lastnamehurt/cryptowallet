@@ -210,7 +210,7 @@ class WalletService(object):
         logging.info("Posting Message to Slack")
         logging.info(80 * "=")
         slack.api_call("chat.postMessage", channel=channel, text=text,
-                       username=USERNAME, unfurl_links="true")
+                       username=USERNAME, unfurl_links="true", icon_url=ICON_URL)
 
 
 service = WalletService()
