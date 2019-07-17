@@ -145,10 +145,7 @@ class WalletService(object):
         }
         log.info("Summary Result:\n{}".format(results))
         if notify and self.hasChanged:
-            slack.api_call("chat.postMessage", text="",
-                           icon_url=ICON_URL,
-                           attachments=summary_message['attachments'], channel=CHANNEL, username=USERNAME,
-                           as_user=False)
+            self.post_message(CHANNEL, "", attachment=summary_message['attachments'])
             if self.percent >= 10 or self.percent <= -10:
                 pass
         return results
@@ -200,17 +197,14 @@ class WalletService(object):
                 ]
             }
             if notify:
-                slack.api_call("chat.postMessage", text="", attachments=detail_message['attachments'],
-                               username=USERNAME,
-                               channel=CHANNEL, icon_url=ICON_URL)
+                self.post_message(CHANNEL, "", attachment=detail_message['attachments'])
         return data
 
-    # TODO: Use this for all slack messages but with an attachments kwarg
-    def post_message(self, channel, text):
+    def post_message(self, channel, text, attachment=None):
         logging.info("Posting Message to Slack")
         logging.info(80 * "=")
         slack.api_call("chat.postMessage", channel=channel, text=text,
-                       username=USERNAME, unfurl_links="true", icon_url=ICON_URL)
+                       username=USERNAME, unfurl_links="true", icon_url=ICON_URL, attachments=attachment)
 
 
 service = WalletService()
