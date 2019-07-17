@@ -27,6 +27,7 @@ class WalletService(object):
         self.diff = 0
         self._old_diff = 0
         self.hasChanged = False
+        self.percent = 0
         self.REQUESTS = {
             'get details': {
                 'action': self.send_details
