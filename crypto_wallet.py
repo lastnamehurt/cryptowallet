@@ -57,9 +57,9 @@ class WalletService(object):
         log.info("Initializing WalletService")
         if slack.rtm_connect():
             schedule.every().minute.at(":00").do(service.get_summary, notify=True)
-            schedule.run_pending()
             log.info(schedule.jobs)
             while True:
+                schedule.run_pending()
                 all_data = slack.rtm_read()
                 for data in all_data:
                     log.info(data)
