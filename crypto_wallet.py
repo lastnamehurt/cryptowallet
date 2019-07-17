@@ -215,7 +215,7 @@ service = WalletService()
 
 class SlackService(object):
     if __name__ == '__main__':
-        schedule.every(5).minutes.do(service.get_summary, notify=True)
+        schedule.every().minute.at(":01").do(service.get_summary, notify=True)
         schedule.run_pending()
         log.info(schedule.jobs)
         service.run()
